@@ -2,25 +2,30 @@
 #include "domain.h"
 #include <iostream>
 
-void DelayQueue::pushTask(const Task& task) {
-	if (!queue_.empty())
-	{
-		queue_.pop();
-	}
-	queue_.push(task);
-	{
-		std::lock_guard<std::mutex> lock(Q_MUTEX);
-		std::cout << getCurrentDatetime() << " : "s << task.d_name << " - " << task.d_delay << " : "s << "created."s << std::endl;
-	}
-	std::this_thread::sleep_for(std::chrono::seconds(task.d_delay));
+void DelayQueue::pushTask(std::shared_ptr<Task> task) {
+	std::lock_guard<std::mutex> lock(Q_MUTEX);
+	std::cout << getCurrentDatetime() << " : "s << task->d_name << " - " << task->d_delay << " : "s << "created."s << std::endl;
+	pushed_task_ = task;
+}
+
+bool DelayQueue::hasTask() const {
+	if (ready_to_perform_queue_.empty())
+		return false;
+
+	return true;
+}
+
+void DelayQueue::handlePushedTask() {
+	if (pushed_task_ == nullptr)
+		return;
+
+	std::this_thread::sleep_for(std::chrono::seconds(pushed_task_->d_delay));
+	ready_to_perform_queue_.push(pushed_task_);
+	pushed_task_ = nullptr;
 }
 
 std::shared_ptr<Task> DelayQueue::popTask() {
-	if (queue_.empty())
-	{
-		throw empty_queue();
-	}
-	std::shared_ptr<Task> const buff_task(std::make_shared<Task>(queue_.front()));
-	queue_.pop();
+	std::shared_ptr<Task> buff_task = ready_to_perform_queue_.front();
+	ready_to_perform_queue_.pop();
 	return buff_task;
 }

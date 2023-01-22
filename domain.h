@@ -6,18 +6,11 @@
 
 inline std::mutex Q_MUTEX;
 
-static inline std::string getCurrentDatetime() {
-	std::time_t now = std::time(NULL);
+static std::string getCurrentDatetime() {
 
-	std::tm* time_info = std::localtime(&now);
+	std::chrono::system_clock::time_point p = std::chrono::system_clock::now();
 
-	std::string cur_time = std::string(std::asctime(time_info));
+	std::time_t t = std::chrono::system_clock::to_time_t(p);
 
-	return { cur_time.begin(), cur_time.end() - 1 };
+	return std::string(std::ctime(&t), std::strlen(std::ctime(&t)) - 1);
 }
-
-struct empty_queue :std::exception {
-	const char* what() const throw() {
-		return "empty queue";
-	}
-};

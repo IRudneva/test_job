@@ -7,13 +7,18 @@ class DelayQueue {
 public:
 	DelayQueue() = default;
 
-	void pushTask(const Task& task);
+	void pushTask(std::shared_ptr<Task> task);
+
+	bool hasTask() const;
+
+	void handlePushedTask();
 
 	std::shared_ptr<Task> popTask();
 
 	~DelayQueue() = default;
 
 private:
-	std::queue<Task> queue_;
+	std::shared_ptr<Task> pushed_task_;
+	std::queue<std::shared_ptr<Task>> ready_to_perform_queue_;
 };
 
